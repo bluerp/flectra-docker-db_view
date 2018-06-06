@@ -1,0 +1,41 @@
+version: '3'
+
+volumes:
+  flectra-web-data:
+  flectra-db-data:
+
+services:
+  db:
+    image: postgres
+    container_name: flectra-db
+    environment:
+      - POSTGRES_PASSWORD=flectra
+      - POSTGRES_USER=flectra
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - flectra-db-data:/var/lib/postgresql/data/pgdata
+    restart: always
+  
+  flectra:
+    container_name: flectra
+    image: flectrahq/flectra
+    links:
+      - db
+    volumes:
+      - ./extra-addons:/mnt/extra-addons
+      - ./init/flectra.conf:/etc/flectra/flectra.conf
+      - flectra-web-data:/var/lib/flectra
+    ports:
+      - "7073:7073"
+    restart: always
+  
+  pgweb:
+    image: sosedoff/pgweb
+    container_name: pgweb
+    ports:
+      - "8080:8081"
+    environment:
+      - DATABASE_URL=postgres://flectra:flectra@db:5432/postgres?sslmode=disable
+    links:
+      - db
+    restart: always
